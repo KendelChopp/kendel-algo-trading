@@ -1,8 +1,7 @@
-import _ from 'lodash';
-import Alpaca from '@alpacahq/alpaca-trade-api';
-import Backtest from '@kendelchopp/alpaca-js-backtesting';
-import TechnicalIndicators from 'technicalindicators';
-const { SMA } = TechnicalIndicators;
+const _ = require('lodash');
+const Alpaca = require('@alpacahq/alpaca-trade-api');
+const Backtest = require('@kendelchopp/alpaca-js-backtesting');
+const SMA = require('technicalindicators').SMA;
 
 const alpaca = new Alpaca({
   keyId: process.env.API_KEY,
@@ -13,8 +12,8 @@ const alpaca = new Alpaca({
 
 const backtest = new Backtest({
   alpaca,
-  startDate: new Date(2020, 6, 1),
-  endDate: new Date(2020, 10, 1)
+  startDate: new Date(2020, 6, 1, 10, 0, 0),
+  endDate: new Date(2020, 6, 1, 11, 0, 0)
 });
 
 let sma20, sma50;
@@ -48,12 +47,12 @@ sma50 = new SMA({ period: 50, values: [] });
 const client = backtest.data_ws;
 
 client.onConnect(() => {
-  client.subscribe(['AM.SPY']);
+  client.subscribe(['alpacadatav1/AM.SPY']);
   //setTimeout(() => client.disconnect(), 6000*1000);
 });
 
 client.onStockAggMin((subject, data) => {
-  const nextValue = JSON.parse(data)[0].closePrice;
+  const nextValue = data.closePrice;
 
   const next20 = sma20.nextValue(nextValue);
   const next50 = sma50.nextValue(nextValue);
