@@ -5,7 +5,8 @@ const SMA = require('technicalindicators').SMA;
 const alpaca = new Alpaca({
   keyId: process.env.API_KEY,
   secretKey: process.env.SECRET_API_KEY,
-  paper: true
+  paper: true,
+  usePolygon: false
 });
 
 let sma20, sma50;
@@ -21,7 +22,7 @@ async function initializeAverages() {
     }
   );
 
-  const closeValues = _.map(initialData.SPY, (bar) => bar.c);
+  const closeValues = _.map(initialData.SPY, (bar) => bar.closePrice);
 
   sma20 = new SMA({ period: 20, values: closeValues });
   sma50 = new SMA({ period: 50, values: closeValues });
@@ -32,15 +33,15 @@ async function initializeAverages() {
 
 initializeAverages();
 
-const client = alpaca.websocket;
+const client = alpaca.data_ws;
 
 client.onConnect(() => {
-  client.subscribe(['AM.SPY']);
+  client.subscribe(['alpacadatav1/AM.SPY']);
   setTimeout(() => client.disconnect(), 6000*1000);
 });
 
 client.onStockAggMin((subject, data) => {
-  const nextValue = JSON.parse(data)[0].c;
+  const nextValue = data.closePrice;
 
   const next20 = sma20.nextValue(nextValue);
   const next50 = sma50.nextValue(nextValue);
